@@ -4,6 +4,7 @@ class Cassandra::Flow
   require_relative 'flow/extend/action'
   require_relative 'flow/action'
   require_relative 'flow/action/when'
+  require_relative 'flow/action/derive'
 
   attr_reader :actions, :source, :target
 

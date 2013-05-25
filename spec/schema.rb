@@ -8,6 +8,7 @@ def reset(*mappers)
   mappers.each do |mapper|
     mapper.keyspace.drop_column_family mapper.table rescue nil
     mapper.migrate
+    mapper.config.dsl.reset_callbacks!
   end
 end
 
