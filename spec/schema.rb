@@ -1,14 +1,17 @@
-Mapper = {}
+module Schema
+  extend self
+  ALL = {}
 
-def mapper(name, &block)
-  Mapper[name] = Cassandra::Mapper.new(:flow, name, &block)
-end
+  def map(name, &block)
+    ALL[name] = Cassandra::Mapper.new(:flow, name, &block)
+  end
 
-def reset(*mappers)
-  mappers.each do |mapper|
-    mapper.keyspace.drop_column_family mapper.table rescue nil
-    mapper.migrate
-    mapper.config.dsl.reset_callbacks!
+  def facts
+    ALL[:facts]
+  end
+
+  def views
+    ALL[:views]
   end
 end
 
@@ -17,5 +20,5 @@ requests_schema = proc do
   subkey :id
 end
 
-mapper :requests, &requests_schema
-mapper :requests_backup, &requests_schema
+Schema.map :facts, &requests_schema
+Schema.map :views, &requests_schema
