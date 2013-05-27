@@ -18,6 +18,10 @@ end
 requests_schema = proc do
   key :project_id
   subkey :id
+
+  type :project_id, :integer
+  type :id,         :integer
+  type :archive,    :boolean
 end
 
 Schema.map :facts, &requests_schema

@@ -11,8 +11,8 @@ describe Cassandra::Flow::Action::Derive do
     facts.insert project_id: 72, id: 16
 
     views.all.should == [
-      { project_id: '72', id: '14', archive: 'true' },
-      { project_id: '72', id: '16', archive: 'true' }
+      { project_id: 72, id: 14, archive: true },
+      { project_id: 72, id: 16, archive: true }
     ]
   end
 end

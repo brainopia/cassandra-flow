@@ -3,8 +3,7 @@ require 'schema'
 
 Cassandra::Mapper.schema = { keyspaces: [ :flow ]}
 Cassandra::Mapper.env    = :test
-Cassandra::Mapper.auto_migrate
-
+Cassandra::Mapper.force_migrate
 
 RSpec.configure do |config|
   config.include Schema
