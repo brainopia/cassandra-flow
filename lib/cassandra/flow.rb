@@ -3,42 +3,34 @@ require 'cassandra/mapper'
 class Cassandra::Flow
   require_relative 'flow/extend/action'
   require_relative 'flow/action'
+  require_relative 'flow/action/target'
   require_relative 'flow/action/when'
   require_relative 'flow/action/derive'
 
-  attr_reader :actions, :source, :target
+  attr_reader :actions, :source
 
   def initialize(mapper)
     @source  = mapper
     @actions = []
   end
 
-  def target(mapper=nil)
-    return @target unless mapper
-    cloned { @target = mapper }
-  end
-
   def setup!
-    source.config.dsl.after_insert {|data| propagate :insert, data }
-    source.config.dsl.after_remove {|data| propagate :remove, data }
-    actions.each {|it| it.setup! self }
+    setup_callbacks!
+    actions.each(&:setup!)
   end
 
   private
 
-  def cloned(&block)
-    clone.tap {|it| it.instance_eval(&block) }
+  def setup_callbacks!
+    source.config.dsl.after_insert {|data| propagate :insert, data }
+    source.config.dsl.after_remove {|data| propagate :remove, data }
   end
 
   def propagate(type, record)
-    records = [record]
-
-    records = actions.inject(records) do |records, action|
-      records.flat_map {|it|
+    actions.inject([record]) do |records, action|
+      records.compact.flat_map do |it|
         action.propagate type, it
-      }.compact
+      end
     end
-
-    records.each {|it| target.send type, it }
   end
 end

@@ -4,9 +4,8 @@ describe Cassandra::Flow::Action::Derive do
   it 'should derive data from source to target' do
     Cassandra::Flow
       .new(facts)
-      .target(views)
       .derive {|it| it.merge(archive: true) }
-      .setup!
+      .target(views)
 
     facts.insert project_id: 72, id: 14
     facts.insert project_id: 72, id: 16

@@ -3,6 +3,10 @@ class Cassandra::Flow::Action
     Cassandra::Flow.action klass
   end
 
-  def setup!(flow)
+  def initialize(flow)
+    @flow = flow
+  end
+
+  def setup!
   end
 end

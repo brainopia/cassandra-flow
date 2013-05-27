@@ -5,7 +5,6 @@ describe Cassandra::Flow do
     Cassandra::Flow
       .new(facts)
       .target(views)
-      .setup!
 
     facts.insert project_id: 72, id: 14
     facts.insert project_id: 72, id: 16

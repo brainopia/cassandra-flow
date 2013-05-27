@@ -1,5 +1,5 @@
 class Cassandra::Flow::Action::Derive < Cassandra::Flow::Action
-  def initialize(&block)
+  def initialize(flow, &block)
     @callback = block
   end
 
