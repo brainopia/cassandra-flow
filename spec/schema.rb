@@ -22,6 +22,7 @@ requests_schema = proc do
   type :project_id, :integer
   type :id,         :integer
   type :archive,    :boolean
+  type :min,        :boolean
 end
 
 Schema.map :facts, &requests_schema

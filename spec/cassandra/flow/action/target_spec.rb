@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Cassandra::Flow do
+describe Cassandra::Flow::Action::Target do
   it 'should flow data from source to target' do
     Cassandra::Flow
       .new(facts)

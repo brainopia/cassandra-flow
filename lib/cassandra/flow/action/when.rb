@@ -1,5 +1,5 @@
 class Cassandra::Flow::Action::When < Cassandra::Flow::Action
-  def initialize(flow, field, value)
+  def initialize(field, value)
     @field = field
     @value = value
   end

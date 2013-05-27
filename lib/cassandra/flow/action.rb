@@ -1,12 +1,28 @@
 class Cassandra::Flow::Action
-  def self.inherited(klass)
-    Cassandra::Flow.action klass
+  class << self
+    def inherited(klass)
+      Cassandra::Flow.action klass
+    end
+
+    def auto_setup!
+      @auto_setup = true
+    end
+
+    def auto_setup?
+      @auto_setup
+    end
   end
 
-  def initialize(flow)
-    @flow = flow
+  def setup!(flow)
   end
 
-  def setup!
+  def lock(lock_name, &block)
+    # FIXME
+    yield
+  end
+
+  def next_actions
+    next_actions = flow.actions[flow.actions.index(self)+1..-1]
+    Cassandra::Flow::Actions.new next_actions
   end
 end

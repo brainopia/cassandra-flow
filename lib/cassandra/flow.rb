@@ -1,36 +1,36 @@
+require 'forwardable'
 require 'cassandra/mapper'
 
 class Cassandra::Flow
   require_relative 'flow/extend/action'
+  require_relative 'flow/actions'
   require_relative 'flow/action'
   require_relative 'flow/action/target'
   require_relative 'flow/action/when'
   require_relative 'flow/action/derive'
+  require_relative 'flow/action/flag'
 
-  attr_reader :actions, :source
+  attr_reader :source, :actions
 
   def initialize(mapper)
     @source  = mapper
-    @actions = []
+    @actions = Actions.new
   end
 
   def setup!
-    setup_callbacks!
-    actions.each(&:setup!)
+    actions.setup! self
+    start_propagation!
   end
 
   private
 
-  def setup_callbacks!
-    source.config.dsl.after_insert {|data| propagate :insert, data }
-    source.config.dsl.after_remove {|data| propagate :remove, data }
+  def initialize_clone(*)
+    super
+    @actions = actions.clone
   end
 
-  def propagate(type, record)
-    actions.inject([record]) do |records, action|
-      records.compact.flat_map do |it|
-        action.propagate type, it
-      end
-    end
+  def start_propagation!
+    source.config.dsl.after_insert {|data| actions.propagate :insert, data }
+    source.config.dsl.after_remove {|data| actions.propagate :remove, data }
   end
 end
