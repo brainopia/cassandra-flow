@@ -1,3 +1,4 @@
+# TODO: reinsert in source (two records in catalog for one entry)
 class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
   attr_reader :mapper, :action, :catalog, :flow
 
@@ -11,45 +12,68 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     @catalog = build_catalog
 
     mapper.config.dsl.after_insert do |match|
-      key_data    = select(:key, match)
-      subkey_data = select(:subkey, match)
+      key   = select(:key, match)
+      subkey = select(:subkey, match)
 
-      lock key_data do
-        records = catalog.get key_data, start: subkey_data
+      lock key do
+        records = catalog.get key, start: subkey
 
         records.each do |record|
           catalog.remove record
           next_actions.propagate :remove, record[:action_result]
 
-          record[:action_result] = action.call record[:action_data], match
-          record.merge! subkey_data
+          record[:action_result] = action.call record[:action_data].dup, match
+          record.merge! subkey
 
           catalog.insert record
           next_actions.propagate :insert, record[:action_result]
         end
       end
     end
+
+    mapper.config.dsl.after_remove do |match|
+      key    = select(:key, match)
+      subkey = select(:subkey, match)
+
+      lock key do
+        records = catalog.get key.merge(subkey)
+        records.each do |record|
+          catalog.remove record
+          next_actions.propagate :remove, record[:action_result]
+          result = match_first :insert, key, record[:action_data]
+          next_actions.propagate :insert, result
+        end
+      end
+    end
   end
 
   def propagate(type, data)
-    key_data = select(:key, data)
+    key = select(:key, data)
 
-    lock key_data do
-      matched = mapper.one key_data
-      result  = action.call data, matched
-
-      if type == :insert
-        catalog_record = key_data
-        catalog_record.merge! matched ? select(:subkey, matched) : max_subkey
-        catalog_record.merge! action_data: data, action_result: result
-        catalog.insert catalog_record
-      end
-
-      result
+    lock key do
+      match_first type, key, data
     end
   end
 
   private
+
+  def match_first(type, key, data)
+    matched = mapper.one key
+    subkey  = matched ? select(:subkey, matched) : max_subkey
+    result  = action.call data.dup, matched
+
+    if type == :insert
+      catalog_record = key
+      catalog_record.merge! subkey
+      catalog_record.merge! action_data: data, action_result: result
+      catalog.insert catalog_record
+    elsif type == :remove
+      found = catalog.get(key.merge(subkey)).find {|it| it[:action_data] == data }
+      catalog.remove found if found
+    end
+
+    result
+  end
 
   def select(field, data)
     data.select {|k,_| mapper.config.send(field).include? k }
@@ -70,7 +94,7 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     Cassandra::Mapper.new keyspace, table do
       key *config.key
       subkey *config.subkey, :uuid
-      type :action_data,   :yaml
+      type :action_data, :yaml
       type :action_result, :yaml
       type :uuid, :uuid
 
