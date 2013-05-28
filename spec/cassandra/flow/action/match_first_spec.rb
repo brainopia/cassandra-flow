@@ -15,7 +15,6 @@ describe Cassandra::Flow::Action::MatchFirst do
     facts2.insert project_id: 72, id: 10
     views.all.should == [{ project_id: 72, id: 14, matched_id: 10 }]
 
-    facts2.insert project_id: 72, id: 10
     facts2.insert project_id: 72, id: 11
     views.all.should == [{ project_id: 72, id: 14, matched_id: 10 }]
 
