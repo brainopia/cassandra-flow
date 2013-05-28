@@ -11,6 +11,10 @@ class Cassandra::Flow::Action
     def auto_setup?
       @auto_setup
     end
+
+    def action_name
+      name.split('::').last.gsub(/(.)([A-Z])/,'\1_\2').downcase
+    end
   end
 
   def setup!(flow)

@@ -9,6 +9,7 @@ class Cassandra::Flow
   require_relative 'flow/action/when'
   require_relative 'flow/action/derive'
   require_relative 'flow/action/flag'
+  require_relative 'flow/action/match_first'
 
   attr_reader :source, :actions
 

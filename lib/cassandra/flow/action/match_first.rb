@@ -10,22 +10,22 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     @flow    = flow
     @catalog = build_catalog
 
-    mapper.after_insert do |match|
+    mapper.config.dsl.after_insert do |match|
       key_data    = select(:key, match)
       subkey_data = select(:subkey, match)
 
       lock key_data do
-        records = catalog.get key_data, start: [subkey_data.values, slice: :after]
+        records = catalog.get key_data, start: subkey_data
 
         records.each do |record|
           catalog.remove record
           next_actions.propagate :remove, record[:action_result]
 
-          record[:action_result] = action.call record[:action_data], data
+          record[:action_result] = action.call record[:action_data], match
           record.merge! subkey_data
 
           catalog.insert record
-          next_actions.propagate :insert, record
+          next_actions.propagate :insert, record[:action_result]
         end
       end
     end
@@ -44,9 +44,9 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
         catalog_record.merge! action_data: data, action_result: result
         catalog.insert catalog_record
       end
-    end
 
-    result
+      result
+    end
   end
 
   private
@@ -56,23 +56,30 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
   end
 
   def max_subkey
-    mapper.config.subkey.map do |type|
-      Cassandra::Mapper::Convert.max type
+    mapper.config.subkey.each_with_object({}) do |field, data|
+      type        = mapper.config.types[field]
+      data[field] = Cassandra::Mapper::Convert.max type
     end
   end
 
   def build_catalog
     keyspace = target.keyspace_base
-    table = target.table + 'match_first'
+    table    = target.table + 'match_first'
+    config   = mapper.config
+
     Cassandra::Mapper.new keyspace, table do
-      key *mapper.config.key
-      subkey *mapper.config.subkey, :uuid
+      key *config.key
+      subkey *config.subkey, :uuid
       type :action_data,   :yaml
       type :action_result, :yaml
       type :uuid, :uuid
 
+      config.subkey.each do |field|
+        type field, config.types[field]
+      end
+
       before_insert do |data|
-        data[:uuid] = Time.now
+        data[:uuid] ||= Time.now
       end
     end
   end
