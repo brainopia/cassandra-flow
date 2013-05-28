@@ -7,6 +7,7 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
     @condition = condition
   end
 
+  # TODO: support removal
   def propagate(type, data)
     flag! data if type == :insert
     data
@@ -29,7 +30,7 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
   end
 
   def flag!(data)
-    lock_name = scope.map {|it| data[it] }.join '.'
+    lock_name = 'flag:' + scope.map {|it| data[it] }.join('.')
     reflag, previous = []
 
     lock(lock_name) do
@@ -47,10 +48,6 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
       next_actions.propagate :remove, previous.merge(name => true)
       next_actions.propagate :insert, previous
     end
-  end
-
-  def source
-    flow.source
   end
 
   def target
