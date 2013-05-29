@@ -6,6 +6,7 @@ class Cassandra::Flow
   require_relative 'flow/actions'
   require_relative 'flow/action'
   require_relative 'flow/action/target'
+  require_relative 'flow/action/notify'
   require_relative 'flow/action/when'
   require_relative 'flow/action/derive'
   require_relative 'flow/action/flag'
