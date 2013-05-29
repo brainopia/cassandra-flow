@@ -1,4 +1,3 @@
-trap(:INT) { p Thread.main.backtrace; exit! }
 class Cassandra::Flow
   def self.action(klass)
     define_method klass.action_name do |*args, &block|
