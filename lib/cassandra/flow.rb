@@ -14,6 +14,10 @@ class Cassandra::Flow
 
   attr_reader :source, :actions
 
+  class << self
+    alias source new
+  end
+
   def initialize(mapper)
     @source  = mapper
     @actions = Actions.new
