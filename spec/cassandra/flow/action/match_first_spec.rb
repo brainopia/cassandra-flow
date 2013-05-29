@@ -5,7 +5,6 @@ describe Cassandra::Flow::Action::MatchFirst do
     Cassandra::Flow
       .new(facts)
       .match_first(facts2) {|data, match|
-        p match
         data[:matched_id] = match ? match[:id] : 404
         data
       }.target(views)
@@ -32,15 +31,6 @@ describe Cassandra::Flow::Action::MatchFirst do
 
     facts2.insert project_id: 72, id: 10
     views.all.should be_empty
-  end
-
-  it 'should support removal of a match' do
-    facts2.insert project_id: 72, id: 14
-    facts.insert project_id: 72, id: 10
-    views.all.should == [{ project_id: 72, id: 10, matched_id: 14 }]
-
-    facts2.remove project_id: 72, id: 14
-    views.all.should == [{ project_id: 72, id: 10, matched_id: 404 }]
   end
 
   it 'should support removal of a match' do

@@ -12,7 +12,7 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     @catalog = build_catalog
 
     mapper.config.dsl.after_insert do |match|
-      key   = select(:key, match)
+      key    = select(:key, match)
       subkey = select(:subkey, match)
 
       lock key do

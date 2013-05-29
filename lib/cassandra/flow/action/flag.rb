@@ -1,3 +1,4 @@
+# TODO: support removal
 class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
   attr_reader :flow, :name, :scope, :condition, :catalog
 
@@ -7,7 +8,6 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
     @condition = condition
   end
 
-  # TODO: support removal
   def propagate(type, data)
     flag! data if type == :insert
     data

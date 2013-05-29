@@ -10,6 +10,7 @@ class Cassandra::Flow
   require_relative 'flow/action/derive'
   require_relative 'flow/action/flag'
   require_relative 'flow/action/match_first'
+  require_relative 'flow/action/match_time'
 
   attr_reader :source, :actions
 
