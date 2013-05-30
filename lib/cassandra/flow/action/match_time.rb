@@ -91,7 +91,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   def build_catalog
     keyspace = target.keyspace_base
-    table    = target.table + 'match_time'
+    table    = target.table + '_match_time_' + mapper.table
     config   = mapper.config
 
     Cassandra::Mapper.new keyspace, table do

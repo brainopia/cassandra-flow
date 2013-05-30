@@ -88,7 +88,7 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
 
   def build_catalog
     keyspace = target.keyspace_base
-    table    = target.table + 'match_first'
+    table    = target.table + '_match_first_' + mapper.table
     config   = mapper.config
 
     Cassandra::Mapper.new keyspace, table do
