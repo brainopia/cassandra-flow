@@ -11,6 +11,12 @@ class Cassandra::Flow::Action::When < Cassandra::Flow::Action
   private
 
   def matches?(data)
-    data[@field] == @value
+    actual_value = data[@field]
+
+    if @value.is_a? Array
+      @value.include? actual_value
+    else
+      @value == actual_value
+    end
   end
 end
