@@ -3,16 +3,17 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   attr_reader :mapper, :action, :catalog, :flow,
     :source_time_field, :matched_time_field
 
-  def initialize(mapper, &action)
+  def initialize(mapper, source_time_field=nil, &action)
     @mapper = mapper
     @action = action
+    @source_time_field = source_time_field
   end
 
   def setup!(flow)
     @flow    = flow
     @catalog = build_catalog
 
-    @source_time_field = flow.source.config.subkey.first
+    @source_time_field ||= flow.source.config.subkey.first
     @matched_time_field = mapper.config.subkey.first
 
     mapper.config.dsl.after_insert do |match|
@@ -90,7 +91,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   def build_catalog
     keyspace = target.keyspace_base
-    table    = target.table + 'match_one'
+    table    = target.table + 'match_time'
     config   = mapper.config
 
     Cassandra::Mapper.new keyspace, table do

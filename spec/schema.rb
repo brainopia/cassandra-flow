@@ -29,6 +29,10 @@ module Schema
   def event_map
     ALL[:event_map]
   end
+
+  def diff_event_map
+    ALL[:diff_event_map]
+  end
 end
 
 basic_schema = proc do
@@ -46,15 +50,18 @@ Schema.map :facts, &basic_schema
 Schema.map :facts2, &basic_schema
 Schema.map :views, &basic_schema
 
-timeline_schema = proc do
-  key :project_id
-  subkey :time
-  type :time, :time
-  type :id, :integer
-  type :project_id, :integer
-  type :matched_id, :integer
+def timeline_schema(field=:time)
+  proc do
+    key :project_id
+    subkey field
+    type field, :time
+    type :id, :integer
+    type :project_id, :integer
+    type :matched_id, :integer
+  end
 end
 
 Schema.map :events, &timeline_schema
 Schema.map :events2, &timeline_schema
 Schema.map :event_map, &timeline_schema
+Schema.map :diff_event_map, &timeline_schema(:diff)
