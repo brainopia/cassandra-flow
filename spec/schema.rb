@@ -42,6 +42,7 @@ basic_schema = proc do
   type :project_id, :integer
   type :id,         :integer
   type :matched_id, :integer
+  type :total,      :integer
   type :archive,    :boolean
   type :min,        :boolean
 end
