@@ -1,5 +1,7 @@
-class Cassandra::Flow::Action::When < Cassandra::Flow::Action
-  def initialize(field, value)
+class Cassandra::Flow::Action::If < Cassandra::Flow::Action
+  PRESENT_SYMBOL = :present
+
+  def initialize(field, value=PRESENT_SYMBOL)
     @field = field
     @value = value
   end
@@ -13,8 +15,11 @@ class Cassandra::Flow::Action::When < Cassandra::Flow::Action
   def matches?(data)
     actual_value = data[@field]
 
-    if @value.is_a? Array
+    case @value
+    when Array
       @value.include? actual_value
+    when PRESENT_SYMBOL
+      actual_value
     else
       @value == actual_value
     end
