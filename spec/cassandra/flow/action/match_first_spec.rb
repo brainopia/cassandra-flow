@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Cassandra::Flow::Action::MatchFirst do
   before do
     Cassandra::Flow
-      .new(facts)
+      .source(facts)
       .match_first(facts2) {|data, match|
         data[:matched_id] = match ? match[:id] : 404
         data

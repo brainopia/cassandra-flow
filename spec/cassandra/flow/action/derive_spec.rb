@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Cassandra::Flow::Action::Derive do
   it 'should derive data from source to target' do
     Cassandra::Flow
-      .new(facts)
+      .source(facts)
       .derive {|it| it.merge(archive: true) }
       .target(views)
 

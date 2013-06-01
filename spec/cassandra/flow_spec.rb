@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Cassandra::Flow do
   it 'should propagate all changes' do
     Cassandra::Flow
-      .new(facts)
+      .source(facts)
       .if(:project_id, 14)
       .derive {|it|
         it[:id] += 1

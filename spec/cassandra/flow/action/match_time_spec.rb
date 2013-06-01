@@ -6,7 +6,7 @@ describe Cassandra::Flow::Action::MatchTime do
   context 'automatic field match' do
     before do
       Cassandra::Flow
-        .new(events)
+        .source(events)
         .match_time(events2) {|data, match|
           data[:matched_id] = match ? match[:id] : 404
           data
@@ -54,7 +54,7 @@ describe Cassandra::Flow::Action::MatchTime do
 
     before do
       Cassandra::Flow
-        .new(events)
+        .source(events)
         .derive {|it|
           it.merge diff: it.delete(:time) + diff
         }.match_time(events2, :diff) {|data, match|

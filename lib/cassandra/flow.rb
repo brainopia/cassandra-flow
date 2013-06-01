@@ -3,7 +3,9 @@ require 'cassandra/mapper'
 
 class Cassandra::Flow
   require_relative 'flow/extend/action'
+  require_relative 'flow/extend/source'
   require_relative 'flow/actions'
+  require_relative 'flow/source'
   require_relative 'flow/action'
   require_relative 'flow/action/target'
   require_relative 'flow/action/check'
@@ -16,20 +18,18 @@ class Cassandra::Flow
   require_relative 'flow/action/match_first'
   require_relative 'flow/action/match_time'
 
-  attr_reader :source, :actions
+  attr_reader :actions
 
-  class << self
-    alias source new
-  end
-
-  def initialize(mapper)
-    @source  = mapper
+  def initialize(&block)
     @actions = Actions.new
   end
 
-  def setup!
-    actions.setup! self
-    start_propagation!
+  def setup!(flow=self)
+    actions.setup! flow
+  end
+
+  def propagate(type, data)
+    actions.propagate type, data
   end
 
   private
@@ -37,10 +37,5 @@ class Cassandra::Flow
   def initialize_clone(*)
     super
     @actions = actions.clone
-  end
-
-  def start_propagation!
-    source.config.dsl.after_insert {|data| actions.propagate :insert, data }
-    source.config.dsl.after_remove {|data| actions.propagate :remove, data }
   end
 end
