@@ -1,10 +1,10 @@
 require 'spec_helper'
 
-describe Cassandra::Flow::Action::Unless do
+describe Cassandra::Flow::Action::UnlessMatch do
   before do
     Cassandra::Flow
       .source(facts)
-      .unless(field, filter)
+      .unless_match(field, filter)
       .target(views)
   end
 

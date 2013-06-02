@@ -1,4 +1,4 @@
-class Cassandra::Flow::Action::If < Cassandra::Flow::Action
+class Cassandra::Flow::Action::IfMatch < Cassandra::Flow::Action
   PRESENT_SYMBOL = :present
 
   def initialize(field, value=PRESENT_SYMBOL, &block)

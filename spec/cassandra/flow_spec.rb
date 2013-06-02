@@ -4,7 +4,7 @@ describe Cassandra::Flow do
   it 'should propagate all changes' do
     Cassandra::Flow
       .source(facts)
-      .if(:project_id, 14)
+      .if_match(:project_id, 14)
       .derive {|it|
         it[:id] += 1
         it[:archive] = true

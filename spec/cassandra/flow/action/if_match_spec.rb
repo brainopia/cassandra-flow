@@ -1,10 +1,10 @@
 require 'spec_helper'
 
-describe Cassandra::Flow::Action::If do
+describe Cassandra::Flow::Action::IfMatch do
   before do
     Cassandra::Flow
       .source(facts)
-      .if(field, filter, &subflow)
+      .if_match(field, filter, &subflow)
       .target(views)
   end
 
