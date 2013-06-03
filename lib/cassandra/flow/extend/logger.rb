@@ -1,5 +1,7 @@
 class Cassandra::Flow
   class << self
+    @@logger = nil
+
     def logger
       @@logger
     end

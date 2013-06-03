@@ -22,8 +22,8 @@ class Cassandra::Flow
 
   attr_reader :actions
 
-  def initialize(&block)
-    @actions = Actions.new
+  def initialize(actions=[], &block)
+    @actions = Actions.new actions
   end
 
   def setup!(flow=self)

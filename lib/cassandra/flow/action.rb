@@ -29,6 +29,6 @@ class Cassandra::Flow::Action
 
   def next_actions
     next_actions = flow.actions[flow.actions.index(self)+1..-1]
-    Cassandra::Flow::Actions.new next_actions
+    Cassandra::Flow.new next_actions
   end
 end
