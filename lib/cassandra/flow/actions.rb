@@ -14,6 +14,7 @@ class Cassandra::Flow::Actions
 
   def propagate(type, data, log)
     inject([data]) do |records, action|
+      return if records.empty?
       info log, action, type, records if log
       records.compact.flat_map do |it|
         action.propagate type, it
