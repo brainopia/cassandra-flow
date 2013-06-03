@@ -1,9 +1,11 @@
 require 'forwardable'
+require 'logger'
 require 'cassandra/mapper'
 
 class Cassandra::Flow
   require_relative 'flow/extend/action'
   require_relative 'flow/extend/source'
+  require_relative 'flow/extend/logger'
   require_relative 'flow/actions'
   require_relative 'flow/source'
   require_relative 'flow/action'
@@ -29,7 +31,7 @@ class Cassandra::Flow
   end
 
   def propagate(type, data)
-    actions.propagate type, data
+    actions.propagate type, data, logger
   end
 
   private

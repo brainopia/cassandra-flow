@@ -8,7 +8,7 @@ class Cassandra::Flow::Source < Cassandra::Flow
 
   def setup!
     super
-    source.config.dsl.after_insert {|data| actions.propagate :insert, data }
-    source.config.dsl.after_remove {|data| actions.propagate :remove, data }
+    source.config.dsl.after_insert {|data| actions.propagate :insert, data, logger }
+    source.config.dsl.after_remove {|data| actions.propagate :remove, data, logger }
   end
 end

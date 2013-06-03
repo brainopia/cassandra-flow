@@ -17,6 +17,8 @@ class Cassandra::Flow::Action
     end
   end
 
+  attr_accessor :location
+
   def setup!(flow)
   end
 
