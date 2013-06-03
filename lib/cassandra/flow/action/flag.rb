@@ -65,9 +65,8 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
   private
 
   def build_catalog
-    keyspace = target.keyspace_base
     table    = target.table + '_flag_' + name.to_s
-    Cassandra::Mapper.new keyspace, table do
+    Cassandra::Mapper.new keyspace_name, table do
       key  :scope
       type :data, :yaml
       type :all,  :yaml
@@ -75,6 +74,6 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
   end
 
   def target
-    flow.actions.last.target
+    flow.root.actions.last.target
   end
 end

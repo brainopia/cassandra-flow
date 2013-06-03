@@ -22,13 +22,26 @@ class Cassandra::Flow::Action
   def setup!(flow)
   end
 
+  def next_actions
+    next_actions = flow.actions[flow.actions.index(self)+1..-1]
+    Cassandra::Flow.new next_actions
+  end
+
+  private
+
   def lock(lock_name, &block)
     # FIXME
     yield
   end
 
-  def next_actions
-    next_actions = flow.actions[flow.actions.index(self)+1..-1]
-    Cassandra::Flow.new next_actions
+  def keyspace_name
+    keyspaces = Cassandra::Mapper.schema[:keyspaces]
+    if keyspaces.size == 1
+      keyspaces.first
+    elsif keyspaces.include? :views
+      :views
+    else
+      raise ArgumentError, 'unsupported yet'
+    end
   end
 end

@@ -8,7 +8,10 @@ class Cassandra::Flow::Action::IfMatch < Cassandra::Flow::Action
   end
 
   def setup!(flow)
-    @subflow.setup! flow if @subflow
+    if @subflow
+      @subflow.parent = flow
+      @subflow.setup!
+    end
   end
 
   def propagate(type, data)

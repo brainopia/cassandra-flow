@@ -21,17 +21,24 @@ class Cassandra::Flow
   require_relative 'flow/action/match_time'
 
   attr_reader :actions
+  attr_accessor :parent
 
   def initialize(actions=[], &block)
     @actions = Actions.new actions
   end
 
-  def setup!(flow=self)
-    actions.setup! flow
+  def setup!
+    actions.setup! self
   end
 
   def propagate(type, data)
     actions.propagate type, data, logger
+  end
+
+  def root
+    flow = self
+    flow = flow.parent while flow.parent
+    flow
   end
 
   private
