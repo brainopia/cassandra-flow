@@ -29,7 +29,7 @@ class Cassandra::Flow::Actions
       "#{type}\n" +
       "#{action.location}\n" +
       records.map {|record| "  #{record.inspect}" }.join("\n") +
-      (action.class.auto_setup? ? "\n" : "")
+      ((action.class.auto_setup? or records.compact.empty?) ? "\n" : "")
     end
   end
 
