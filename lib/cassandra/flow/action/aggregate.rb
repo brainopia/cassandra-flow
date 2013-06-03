@@ -36,7 +36,7 @@ class Cassandra::Flow::Action::Aggregate < Cassandra::Flow::Action
       end
 
       if previous != update
-        next_actions.propagate :remove, previous
+        next_actions.propagate :remove, previous if previous
         next_actions.propagate :insert, update
       end
     end
