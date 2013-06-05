@@ -43,7 +43,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
       lock key do
         records = catalog.get key, start: { source_time: matched_time }
-        records.select! {|it| it[:matched_time] == matched_time }
+        records.select! {|it| it[:matched_time].to_i == matched_time.to_i }
 
         records.each do |record|
           catalog.remove record
