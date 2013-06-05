@@ -47,6 +47,16 @@ class Cassandra::Flow::Action
   end
 
   def propagate_for(actions, type, data)
+    Cassandra::Flow.logger.tap do |it|
+      next unless it
+      it.puts name
+      it.puts "location - #{location}"
+      it.puts "destinations - #{actions.map(&:location)}"
+      it.puts data.inspect
+      it.puts
+      it.puts
+    end
+
     if data.is_a? Array
       data.each do |it|
         it.freeze

@@ -1,24 +1,28 @@
 require 'cassandra/mapper'
 
 class Cassandra::Flow
-  # hook to extend flow with additional actions
-  def self.action(klass, type=nil)
-    if type == :source
-      define   = :define_singleton_method
-      instance = false
-    else
-      define   = :define_method
-      instance = true
-    end
-    send define, klass.action_name do |*args, &block|
-      new_action = klass.new instance && action
-      new_action.setup! *args, &block
+  class << self
+    attr_accessor :logger
 
-      if instance
-        # to support inheritance of extended modules
-        clone.tap {|it| it.action = new_action }
+    # hook to extend flow with additional actions
+    def action(klass, type=nil)
+      if type == :source
+        define   = :define_singleton_method
+        instance = false
       else
-        Cassandra::Flow.new new_action
+        define   = :define_method
+        instance = true
+      end
+      send define, klass.action_name do |*args, &block|
+        new_action = klass.new instance && action
+        new_action.setup! *args, &block
+
+        if instance
+          # to support inheritance of extended modules
+          clone.tap {|it| it.action = new_action }
+        else
+          Cassandra::Flow.new new_action
+        end
       end
     end
   end
