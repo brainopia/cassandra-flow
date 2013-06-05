@@ -67,7 +67,10 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     source_time = data[source_field]
 
     unless source_time
-      raise ArgumentError, "missing :#{source_field} in #{data.inspect}"
+      raise ArgumentError, <<-ERROR
+        missing :#{source_field} in #{data.inspect}"
+        from #{location}
+      ERROR
     end
 
     matched = mapper.one key, reversed: true,
