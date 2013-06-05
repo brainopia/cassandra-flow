@@ -4,16 +4,22 @@ class Cassandra::Flow
   # hook to extend flow with additional actions
   def self.action(klass, type=nil)
     if type == :source
-      define = :define_singleton_method
-      parent = false
+      define   = :define_singleton_method
+      instance = false
     else
-      define = :define_method
-      parent = true
+      define   = :define_method
+      instance = true
     end
     send define, klass.action_name do |*args, &block|
-      new_action = klass.new parent && action
+      new_action = klass.new instance && action
       new_action.setup! *args, &block
-      Cassandra::Flow.new new_action
+
+      if instance
+        # to support inheritance of extended modules
+        clone.tap {|it| it.action = new_action }
+      else
+        Cassandra::Flow.new new_action
+      end
     end
   end
 
@@ -30,7 +36,7 @@ class Cassandra::Flow
   require_relative 'flow/actions/if_match'
   require_relative 'flow/actions/unless_match'
 
-  attr_reader :action
+  attr_accessor :action
 
   def initialize(action)
     @action = action
