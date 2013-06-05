@@ -50,11 +50,11 @@ class Cassandra::Flow::Action
     if data.is_a? Array
       data.each do |it|
         it.freeze
-        actions.map {|it| it.propagate type, it }
+        actions.map {|action| action.propagate type, it }
       end
     elsif data
       data.freeze
-      actions.map {|it| it.propagate type, data }
+      actions.map {|action| action.propagate type, data }
     end
   end
 
