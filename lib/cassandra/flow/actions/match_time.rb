@@ -70,6 +70,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       raise ArgumentError, <<-ERROR
         missing :#{source_field} in #{data.inspect}"
         from #{location}
+        parents #{parents.map(&:location).join(', ')}
       ERROR
     end
 
