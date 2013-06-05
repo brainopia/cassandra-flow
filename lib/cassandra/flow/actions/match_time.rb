@@ -79,15 +79,19 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
     matched_time = matched[matched_field] if matched
     result       = callback.call data, matched
-    subkey       = { source_time: source_time, matched_time: matched_time }
+    subkey       = { source_time: source_time }
 
     if type == :insert
       catalog_record = key
       catalog_record.merge! subkey
-      catalog_record.merge! action_data: data, action_result: result
+      catalog_record.merge! \
+        action_data:    data,
+        action_result:  result,
+        matched_time:   matched_time
       catalog.insert catalog_record
     elsif type == :remove
-      catalog.remove key.merge(subkey)
+      found = catalog.get(key.merge(subkey)).find {|it| it[:action_data] == data }
+      catalog.remove found if found
     end
 
     propagate_next type, result
