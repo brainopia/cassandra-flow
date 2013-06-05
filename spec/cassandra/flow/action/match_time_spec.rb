@@ -8,8 +8,7 @@ describe Cassandra::Flow::Action::MatchTime do
       Cassandra::Flow
         .source(events)
         .match_time(events2) {|data, match|
-          data[:matched_id] = match ? match[:id] : 404
-          data
+          data.merge matched_id: match ? match[:id] : 404
         }.target(event_map)
     end
 
@@ -55,11 +54,11 @@ describe Cassandra::Flow::Action::MatchTime do
     before do
       Cassandra::Flow
         .source(events)
-        .derive {|it|
-          it.merge diff: it.delete(:time) + diff
+        .derive {|data|
+          data = data.dup
+          data.merge! diff: data.delete(:time) + diff
         }.match_time(events2, :diff) {|data, match|
-          data[:matched_id] = match ? match[:id] : 404
-          data
+          data.merge matched_id: match ? match[:id] : 404
         }.target(diff_event_map)
     end
 

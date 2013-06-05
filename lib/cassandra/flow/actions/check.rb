@@ -1,5 +1,7 @@
 class Cassandra::Flow::Action::Check < Cassandra::Flow::Action
-  def initialize(type=nil, &callback)
+  action!
+
+  def setup!(type=nil, &callback)
     @type     = type
     @callback = callback
   end

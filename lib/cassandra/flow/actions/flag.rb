@@ -1,16 +1,21 @@
 class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
-  attr_reader :flow, :name, :scope, :condition, :catalog
+  action!
+  attr_reader :flag, :scope, :condition, :catalog
 
-  def initialize(name, scope, &condition)
-    @name      = name
+  def setup!(name, scope, &condition)
+    @flag      = name
     @scope     = Array scope
     @condition = condition
+
+    append_name @flag.to_s
+    append_name @scope.join('_')
+    build_catalog
   end
 
-  def propagate(type, data)
-    lock_name = 'flag:' + scope.map {|it| data[it] }.join('.')
+  def transform(type, data)
+    lock_name = [name, scope.map {|it| data[it] }].join('.')
 
-    lock(lock_name) do
+    lock lock_name do
       record   = catalog.one scope: lock_name
       previous = record[:data] if record
       all      = record ? record[:all] : []
@@ -22,26 +27,27 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
 
         if reflag
           catalog.insert scope: lock_name, data: data, all: all
-          data[name] = true
+          data = data.dup
+          data[flag] = true
         else
           catalog.insert scope: lock_name, data: previous, all: all
         end
 
         if reflag and previous
-          next_actions.propagate :remove, previous.merge(name => true)
-          next_actions.propagate :insert, previous
+          propagate_next :remove, previous.merge(flag => true)
+          propagate_next :insert, previous
         end
       when :remove
         if all.delete data
           if data == previous
-            data[name] = true
+            data = data.dup
+            data[flag] = true
+
             new_data = all.sort {|a,b| condition.call(a,b) ? -1 : 1 }.first
             if new_data
-              next_actions.propagate :remove, new_data
+              propagate_next :remove, new_data
               catalog.insert scope: lock_name, data: new_data, all: all
-
-              new_data[name] = true
-              next_actions.propagate :insert, new_data
+              propagate_next :insert, new_data.merge(flag => true)
             else
               catalog.remove scope: lock_name
             end
@@ -57,23 +63,13 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
     end
   end
 
-  def setup!(flow)
-    @flow    = flow
-    @catalog = build_catalog
-  end
-
   private
 
   def build_catalog
-    table    = target.table + '_flag_' + name.to_s
-    Cassandra::Mapper.new keyspace_name, table do
+    @catalog = Cassandra::Mapper.new keyspace_name, name do
       key  :scope
       type :data, :yaml
       type :all,  :yaml
     end
-  end
-
-  def target
-    flow.root.actions.last.target
   end
 end

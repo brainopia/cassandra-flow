@@ -1,15 +1,14 @@
 # TODO: reinsert in source (two records in catalog for one entry)
 class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
-  attr_reader :mapper, :action, :catalog, :flow
+  action!
+  attr_reader :mapper, :callback, :catalog
 
-  def initialize(mapper, &action)
-    @mapper = mapper
-    @action = action
-  end
+  def setup!(mapper, &callback)
+    @mapper   = mapper
+    @callback = callback
 
-  def setup!(flow)
-    @flow    = flow
-    @catalog = build_catalog
+    append_name mapper.table
+    build_catalog
 
     mapper.config.dsl.after_insert do |match|
       key    = select(:key, match)
@@ -20,13 +19,13 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
 
         records.each do |record|
           catalog.remove record
-          next_actions.propagate :remove, record[:action_result]
+          propagate_next :remove, record[:action_result]
 
-          record[:action_result] = action.call record[:action_data].dup, match
+          record[:action_result] = callback.call record[:action_data], match
           record.merge! subkey
 
           catalog.insert record
-          next_actions.propagate :insert, record[:action_result]
+          propagate_next :insert, record[:action_result]
         end
       end
     end
@@ -39,9 +38,8 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
         records = catalog.get key.merge(subkey)
         records.each do |record|
           catalog.remove record
-          next_actions.propagate :remove, record[:action_result]
-          result = match_first :insert, key, record[:action_data]
-          next_actions.propagate :insert, result
+          propagate_next :remove, record[:action_result]
+          match_first :insert, key, record[:action_data]
         end
       end
     end
@@ -49,7 +47,6 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
 
   def propagate(type, data)
     key = select(:key, data)
-
     lock key do
       match_first type, key, data
     end
@@ -60,7 +57,7 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
   def match_first(type, key, data)
     matched = mapper.one key
     subkey  = matched ? select(:subkey, matched) : max_subkey
-    result  = action.call data.dup, matched
+    result  = callback.call data, matched
 
     if type == :insert
       catalog_record = key
@@ -72,7 +69,7 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
       catalog.remove found if found
     end
 
-    result
+    propagate_next type, result
   end
 
   def select(field, data)
@@ -87,10 +84,8 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
   end
 
   def build_catalog
-    table    = target.table + '_match_first_' + mapper.table
-    config   = mapper.config
-
-    Cassandra::Mapper.new keyspace_name, table do
+    config = mapper.config
+    @catalog = Cassandra::Mapper.new keyspace_name, name do
       key *config.key
       subkey *config.subkey, :uuid
       type :action_data, :yaml
@@ -107,11 +102,7 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     end
   end
 
-  def target
-    flow.root.actions.last.target
-  end
-
   def lock(key, &block)
-    super 'match_first:' + key.values.join('.'), &block
+    super name + key.values.join('.'), &block
   end
 end

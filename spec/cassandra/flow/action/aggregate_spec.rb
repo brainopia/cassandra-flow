@@ -6,6 +6,7 @@ describe Cassandra::Flow::Action::Aggregate do
       .source(facts)
       .aggregate(:id) {|data, previous|
         previous ||= {}
+        data = data.dup
         data[:total] = previous[:total].to_i + 1
         data
       }.target(views)

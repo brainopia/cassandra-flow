@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Cassandra::Flow::Action::Notify do
+describe Cassandra::Flow::Action::Check do
   let(:data) {{ project_id: 14, id: 12, data: 'content' }}
   let(:data2) {{ project_id: 14, id: 15, data: 'content2' }}
 
@@ -8,7 +8,7 @@ describe Cassandra::Flow::Action::Notify do
     receiver = double :receiver
     receiver.should_receive(:get).with(data)
 
-    Cassandra::Flow.source(facts).notify do |data|
+    Cassandra::Flow.source(facts).check do |data|
       receiver.get data
     end
 
@@ -20,7 +20,7 @@ describe Cassandra::Flow::Action::Notify do
     receiver.should_receive(:get).with(data)
     receiver.should_not_receive(:get).with(data2)
 
-    Cassandra::Flow.source(facts).notify(:remove) do |data|
+    Cassandra::Flow.source(facts).check(:remove) do |data|
       receiver.get data
     end
 

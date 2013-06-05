@@ -1,9 +1,11 @@
 class Cassandra::Flow::Action::Derive < Cassandra::Flow::Action
-  def initialize(&block)
-    @callback = block
+  action!
+
+  def setup!(&callback)
+    @callback = callback
   end
 
-  def propagate(type, data)
+  def transform(type, data)
     @callback.call data
   end
 end

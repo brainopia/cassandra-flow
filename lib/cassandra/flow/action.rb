@@ -1,15 +1,7 @@
 class Cassandra::Flow::Action
   class << self
-    def inherited(klass)
-      Cassandra::Flow.action klass
-    end
-
-    def auto_setup!
-      @auto_setup = true
-    end
-
-    def auto_setup?
-      @auto_setup
+    def action!(type=nil)
+      Cassandra::Flow.action self, type
     end
 
     def action_name
@@ -17,17 +9,69 @@ class Cassandra::Flow::Action
     end
   end
 
-  attr_accessor :location
+  attr_reader :location, :parents, :children, :name, :suffix
 
-  def setup!(flow)
+  def initialize(action=nil)
+    @location = caller[1].gsub(/(:in.*)|(#{Dir.pwd}\/)/, '')
+    @parents  = []
+    @children = []
+    @name     = self.class.action_name
+
+    if action
+      @suffix = action.suffix
+      append_name action.suffix
+      add_parent action
+    end
   end
 
-  def next_actions
-    next_actions = flow.actions[flow.actions.index(self)+1..-1]
-    Cassandra::Flow.new next_actions
+  def add_parent(action)
+    parents << action
+    action.add_child self
+  end
+
+  def add_child(action)
+    children << action
+  end
+
+  def propagate(type, data)
+    data = transform type, data
+    propagate_next type, data
+  end
+
+  def transform(type, data)
+    data
+  end
+
+  def propagate_next(type, data)
+    propagate_for children, type, data
+  end
+
+  def propagate_for(actions, type, data)
+    if data.is_a? Array
+      data.each do |it|
+        it.freeze
+        actions.map {|it| it.propagate type, it }
+      end
+    elsif data
+      data.freeze
+      actions.map {|it| it.propagate type, data }
+    end
+  end
+
+  def endpoints(actions=children)
+    return self if actions.empty?
+    actions.flat_map(&:endpoints)
   end
 
   private
+
+  def root
+    root = self
+    while parent = root.parents.first
+      root = parent
+    end
+    root
+  end
 
   def lock(lock_name, &block)
     # FIXME
@@ -43,5 +87,9 @@ class Cassandra::Flow::Action
     else
       raise ArgumentError, 'unsupported yet'
     end
+  end
+
+  def append_name(string)
+    name << '_' << string if string
   end
 end

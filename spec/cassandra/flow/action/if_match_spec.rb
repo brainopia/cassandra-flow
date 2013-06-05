@@ -54,8 +54,9 @@ describe Cassandra::Flow::Action::IfMatch do
     let(:field)  { :id }
     let(:filter) { 42 }
     let(:subflow) do
-      proc do
-        derive do |data|
+      proc do |it|
+        it.derive do |data|
+          data = data.dup
           data[:id] = 777
           data
         end

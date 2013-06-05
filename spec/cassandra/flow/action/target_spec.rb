@@ -14,8 +14,4 @@ describe Cassandra::Flow::Action::Target do
     views.all.should have(2).items
     views.all.should == facts.all
   end
-
-  it 'return a flow with new source' do
-    flow.source.should == views
-  end
 end

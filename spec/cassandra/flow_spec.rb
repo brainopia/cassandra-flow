@@ -6,9 +6,11 @@ describe Cassandra::Flow do
       .source(facts)
       .if_match(:project_id, 14)
       .derive {|it|
-        it[:id] += 1
-        it[:archive] = true
-        it
+        {
+          project_id: it[:project_id],
+          id:         it[:id] + 1,
+          archive:    true
+        }
       }.target(views)
 
     facts.insert project_id: 14, id: 1

@@ -1,50 +1,38 @@
-require 'forwardable'
-require 'logger'
 require 'cassandra/mapper'
 
 class Cassandra::Flow
-  require_relative 'flow/extend/action'
-  require_relative 'flow/extend/source'
-  require_relative 'flow/extend/logger'
-  require_relative 'flow/actions'
-  require_relative 'flow/source'
+  # hook to extend flow with additional actions
+  def self.action(klass, type=nil)
+    if type == :source
+      define = :define_singleton_method
+      parent = false
+    else
+      define = :define_method
+      parent = true
+    end
+    send define, klass.action_name do |*args, &block|
+      new_action = klass.new parent && action
+      new_action.setup! *args, &block
+      Cassandra::Flow.new new_action
+    end
+  end
+
   require_relative 'flow/action'
-  require_relative 'flow/action/target'
-  require_relative 'flow/action/check'
-  require_relative 'flow/action/notify'
-  require_relative 'flow/action/if_match'
-  require_relative 'flow/action/unless_match'
-  require_relative 'flow/action/derive'
-  require_relative 'flow/action/flag'
-  require_relative 'flow/action/aggregate'
-  require_relative 'flow/action/match_first'
-  require_relative 'flow/action/match_time'
+  require_relative 'flow/actions/source'
+  require_relative 'flow/actions/target'
+  require_relative 'flow/actions/derive'
+  require_relative 'flow/actions/check'
+  require_relative 'flow/actions/label'
+  require_relative 'flow/actions/aggregate'
+  require_relative 'flow/actions/flag'
+  require_relative 'flow/actions/match_first'
+  require_relative 'flow/actions/match_time'
+  require_relative 'flow/actions/if_match'
+  require_relative 'flow/actions/unless_match'
 
-  attr_reader :actions
-  attr_accessor :parent
+  attr_reader :action
 
-  def initialize(actions=[], &block)
-    @actions = Actions.new actions
-  end
-
-  def setup!
-    actions.setup! self
-  end
-
-  def propagate(type, data)
-    actions.propagate type, data, logger
-  end
-
-  def root
-    flow = self
-    flow = flow.parent while flow.parent
-    flow
-  end
-
-  private
-
-  def initialize_clone(*)
-    super
-    @actions = actions.clone
+  def initialize(action)
+    @action = action
   end
 end
