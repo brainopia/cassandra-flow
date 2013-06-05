@@ -4,6 +4,8 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   attr_reader :mapper, :callback, :catalog,
               :source_field, :matched_field
 
+  TIME_STEP = 0.001
+
   def setup!(mapper, source_field=nil, &callback)
     @mapper        = mapper
     @callback      = callback
@@ -21,7 +23,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
       lock key do
         # -0.001 instead of (slice: :before) because of uuid
-        records = catalog.get key, start: { source_time: matched_time - 0.001 }
+        records = catalog.get key, start: { source_time: matched_time - TIME_STEP }
         records.select! do |it|
           not it[:matched_time] or it[:matched_time] <= matched_time
         end
@@ -79,7 +81,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
     matched_time = matched[matched_field] if matched
     result       = callback.call data, matched
-    subkey       = { source_time: source_time }
+    subkey       = {  }
 
     if type == :insert
       catalog_record = key
@@ -87,10 +89,15 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       catalog_record.merge! \
         action_data:    data,
         action_result:  result,
-        matched_time:   matched_time
+        matched_time:   matched_time,
+        source_time:    source_time
       catalog.insert catalog_record
     elsif type == :remove
-      found = catalog.get(key.merge(subkey)).find {|it| it[:action_data] == data }
+      potential = catalog.get key,
+        start:  { source_time: source_time - TIME_STEP },
+        finish: { source_time: source_time + TIME_STEP }
+
+      found = potential.find {|it| it[:action_data] == data }
       catalog.remove found if found
     end
 
