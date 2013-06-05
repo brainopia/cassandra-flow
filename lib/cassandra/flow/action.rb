@@ -12,7 +12,7 @@ class Cassandra::Flow::Action
   attr_reader :location, :parents, :children, :name, :suffix
 
   def initialize(action=nil)
-    @location = caller[1].gsub(/(:in.*)|(#{Dir.pwd}\/)/, '')
+    @location = caller[2].gsub(/(:in.*)|(#{Dir.pwd}\/)/, '')
     @parents  = []
     @children = []
     @name     = self.class.action_name
