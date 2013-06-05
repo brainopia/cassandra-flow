@@ -63,15 +63,12 @@ class Cassandra::Flow::Action
     actions.flat_map(&:endpoints)
   end
 
-  private
-
   def root
-    root = self
-    while parent = root.parents.first
-      root = parent
-    end
-    root
+    return self if parents.empty?
+    parents.first.root
   end
+
+  private
 
   def lock(lock_name, &block)
     # FIXME
