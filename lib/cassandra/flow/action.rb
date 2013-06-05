@@ -52,6 +52,7 @@ class Cassandra::Flow::Action
       it.puts name
       it.puts "location - #{location}"
       it.puts "destinations - #{actions.map(&:location)}"
+      it.puts type
       it.puts data.inspect
       it.puts
       it.puts
