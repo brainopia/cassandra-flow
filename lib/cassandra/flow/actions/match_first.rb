@@ -49,11 +49,11 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     key = select(:key, data)
 
     if key.values.any?(&:nil?)
-      return callback.call(data, nil)
-    end
-
-    lock key do
-      match_first type, key, data
+      propagate_next callback.call(data, nil)
+    else
+      lock key do
+        match_first type, key, data
+      end
     end
   end
 
