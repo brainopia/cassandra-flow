@@ -44,7 +44,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       matched_time = match[matched_field]
 
       lock key do
-        records = catalog.get key, start: { source_time: matched_time }
+        records = catalog.get key, start: { source_time: matched_time - TIME_STEP }
         records.select! {|it| it[:matched_time].to_i == matched_time.to_i }
 
         records.each do |record|

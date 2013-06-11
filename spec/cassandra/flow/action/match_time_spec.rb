@@ -39,12 +39,19 @@ describe Cassandra::Flow::Action::MatchTime do
     end
 
     it 'should support removal of a match' do
-      events2.insert project_id: 72, id: 14, time: base_time - 100_000
+      events2.insert project_id: 72, id: 14, time: base_time
       events.insert project_id: 72, time: base_time
-      event_map.all.should == [{ project_id: 72, matched_id: 14, time: base_time }]
+      events.insert project_id: 72, time: base_time + 100_000
+      event_map.all.should == [
+        { project_id: 72, matched_id: 14, time: base_time },
+        { project_id: 72, matched_id: 14, time: base_time + 100_000 }
+      ]
 
-      events2.remove project_id: 72, id: 14, time: base_time - 100_000
-      event_map.all.should == [{ project_id: 72, matched_id: 404, time: base_time }]
+      events2.remove project_id: 72, id: 14, time: base_time
+      event_map.all.should == [
+        { project_id: 72, matched_id: 404, time: base_time },
+        { project_id: 72, matched_id: 404, time: base_time + 100_000 }
+      ]
     end
   end
 
