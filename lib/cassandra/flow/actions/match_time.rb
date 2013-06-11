@@ -119,6 +119,6 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   end
 
   def lock(key, &block)
-    super name + key.values.join('.'), &block
+    super name + key.values.join('.'), sleep: 1000, &block
   end
 end

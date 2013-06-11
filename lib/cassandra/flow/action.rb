@@ -81,7 +81,7 @@ class Cassandra::Flow::Action
 
   private
 
-  def lock(lock_name, &block)
+  def lock(lock_name, options={}, &block)
     # FIXME
     yield
   end
