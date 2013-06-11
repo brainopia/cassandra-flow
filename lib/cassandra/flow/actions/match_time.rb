@@ -58,6 +58,8 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   def propagate(type, data)
     key = select(:key, data)
+    return if key.values.any?(&:nil?)
+
     lock key do
       match_time type, key, data
     end
@@ -67,14 +69,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   def match_time(type, key, data)
     source_time = data[source_field]
-
-    unless source_time
-      raise ArgumentError, <<-ERROR
-        missing :#{source_field} in #{data.inspect}"
-        from #{location}
-        parents #{parents.map(&:location).join(', ')}
-      ERROR
-    end
+    error! "missing :#{source_field} in #{data.inspect}" unless source_time
 
     matched = mapper.one key, reversed: true,
                          start: { matched_field => source_time, slice: :after }
@@ -120,5 +115,13 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   def lock(key, &block)
     super name + key.values.join('.'), sleep: 1000, &block
+  end
+
+  def error!(text, error=ArgumentError)
+    raise error, <<-ERROR
+      #{text}
+      from #{location}
+      parents #{parents.map(&:location).join(', ')}
+    ERROR
   end
 end
