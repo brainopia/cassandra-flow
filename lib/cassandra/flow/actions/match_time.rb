@@ -81,11 +81,9 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
     matched_time = matched[matched_field] if matched
     result       = callback.call data, matched
-    subkey       = {  }
 
     if type == :insert
       catalog_record = key
-      catalog_record.merge! subkey
       catalog_record.merge! \
         action_data:    data,
         action_result:  result,
