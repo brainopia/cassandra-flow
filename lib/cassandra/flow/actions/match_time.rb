@@ -58,7 +58,10 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   def propagate(type, data)
     key = select(:key, data)
-    return if key.values.any?(&:nil?)
+
+    if key.values.any?(&:nil?)
+      return callback.call(data, nil)
+    end
 
     lock key do
       match_time type, key, data
