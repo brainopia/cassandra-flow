@@ -112,8 +112,10 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     end
   end
 
-  def select(field, data)
-    data.select {|k,_| mapper.config.send(field).include? k }
+  def select(key_type, data)
+    mapper.config.send(key_type).each_with_object({}) do |field, result|
+      result[field] = data[field]
+    end
   end
 
   def lock(key, &block)
