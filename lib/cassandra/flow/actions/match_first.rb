@@ -47,6 +47,11 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
 
   def propagate(type, data)
     key = select(:key, data)
+
+    if key.values.any?(&:nil?)
+      return callback.call(data, nil)
+    end
+
     lock key do
       match_first type, key, data
     end
