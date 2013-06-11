@@ -60,7 +60,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     key = select(:key, data)
 
     if key.values.any?(&:nil?)
-      propagate_next callback.call(data, nil)
+      propagate_next type, callback.call(data, nil)
     else
       lock key do
         match_time type, key, data
