@@ -75,14 +75,15 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     source_time = data[source_field]
     error! "missing :#{source_field} in #{data.inspect}" unless source_time
 
-    # slice :after in reverse means to match including current record
-    matched = mapper.one key, reversed: true,
-                         start: { matched_field => source_time, slice: :after }
-
-    matched_time = matched[matched_field] if matched
-    result       = callback.call data, matched
 
     if type == :insert
+      # slice :after in reverse means to match including current record
+      matched = mapper.one key, reversed: true,
+                           start: { matched_field => source_time, slice: :after }
+
+      matched_time = matched[matched_field] if matched
+      result       = callback.call data, matched
+
       catalog_record = key
       catalog_record.merge! \
         action_data:    data,
@@ -96,7 +97,11 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
         finish: { source_time: source_time + TIME_STEP }
 
       found = potential.find {|it| it[:action_data] == data }
-      catalog.remove found if found
+
+      if found
+        result = found[:action_result]
+        catalog.remove found
+      end
     end
 
     propagate_next type, result
