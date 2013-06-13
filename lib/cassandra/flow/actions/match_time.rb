@@ -1,4 +1,5 @@
 # TODO: reinsert?
+# if matched mapper uses uuid we have to use TIME_STEP also
 class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   action!
   attr_reader :mapper, :callback, :catalog,
@@ -74,6 +75,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     source_time = data[source_field]
     error! "missing :#{source_field} in #{data.inspect}" unless source_time
 
+    # slice :after in reverse means to match including current record
     matched = mapper.one key, reversed: true,
                          start: { matched_field => source_time, slice: :after }
 

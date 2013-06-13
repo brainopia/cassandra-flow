@@ -29,6 +29,12 @@ describe Cassandra::Flow::Action::MatchTime do
       event_map.all.should == [{ project_id: 72, matched_id: 10, time: base_time }]
     end
 
+    it 'should support equal time matching on insert' do
+      events2.insert project_id: 72, id: 10, time: base_time
+      events.insert project_id: 72, time: base_time
+      event_map.all.should == [{ project_id: 72, matched_id: 10, time: base_time }]
+    end
+
     it 'should support removal' do
       events.insert project_id: 72, time: base_time
       events.remove project_id: 72, time: base_time
