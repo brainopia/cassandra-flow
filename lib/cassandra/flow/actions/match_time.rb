@@ -9,7 +9,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   def setup!(mapper, source_field=nil, &callback)
     @mapper        = mapper
     @callback      = callback
-    @source_field  = source_field || root.source.config.subkey.first
+    @source_field  = source_field || source.config.subkey.first
     @matched_field = mapper.config.subkey.first
 
     append_name mapper.table

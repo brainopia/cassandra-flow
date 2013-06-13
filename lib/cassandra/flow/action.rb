@@ -79,6 +79,12 @@ class Cassandra::Flow::Action
     parents.first.root
   end
 
+  def source
+    return source if is_a? Source
+    return target if is_a? Target
+    parents.first.source
+  end
+
   private
 
   def lock(lock_name, options={}, &block)
