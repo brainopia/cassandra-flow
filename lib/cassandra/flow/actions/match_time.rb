@@ -5,13 +5,15 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   attr_reader :mapper, :callback, :catalog,
               :source_field, :matched_field
 
+  # TIME_STEP instead of (slice: :before/after) because of uuid
   TIME_STEP = 0.001
 
-  def setup!(mapper, source_field=nil, &callback)
+  def setup!(mapper, options={}, &callback)
     @mapper        = mapper
     @callback      = callback
-    @source_field  = source_field || source.config.subkey.first
+    @source_field  = options[:source] || source.config.subkey.first
     @matched_field = mapper.config.subkey.first
+    @match_after   = options[:after]
 
     append_name mapper.table
     append_name source_field.to_s
@@ -23,10 +25,16 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       matched_time = match[matched_field]
 
       lock key do
-        # -0.001 instead of (slice: :before) because of uuid
-        records = catalog.get key, start: { source_time: matched_time - TIME_STEP }
-        records.select! do |it|
-          not it[:matched_time] or it[:matched_time] <= matched_time
+        if match_after?
+          records = catalog.get key, finish: { source_time: matched_time + TIME_STEP }
+          records.select! do |it|
+            not it[:matched_time] or it[:matched_time] > matched_time
+          end
+        else
+          records = catalog.get key, start: { source_time: matched_time - TIME_STEP }
+          records.select! do |it|
+            not it[:matched_time] or it[:matched_time] < matched_time
+          end
         end
 
         records.each do |record|
@@ -45,7 +53,13 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       matched_time = match[matched_field]
 
       lock key do
-        records = catalog.get key, start: { source_time: matched_time - TIME_STEP }
+        query = if match_after?
+          { finish: { source_time: matched_time + TIME_STEP }}
+        else
+          { start: { source_time: matched_time - TIME_STEP }}
+        end
+
+        records = catalog.get key, query
         records.select! {|it| it[:matched_time].to_i == matched_time.to_i }
 
         records.each do |record|
@@ -75,11 +89,14 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     source_time = data[source_field]
     error! "missing :#{source_field} in #{data.inspect}" unless source_time
 
-
     if type == :insert
-      # slice :after in reverse means to match including current record
-      matched = mapper.one key, reversed: true,
-                           start: { matched_field => source_time, slice: :after }
+      query = if match_after?
+          { start: { matched_field => source_time }}
+        else
+          # slice :after in reverse means to match including current record
+          { reversed: true, start: { matched_field => source_time, slice: :after }}
+        end
+      matched = mapper.one key, query
 
       matched_time = matched[matched_field] if matched
       result       = callback.call data, matched
@@ -135,5 +152,9 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       from #{location}
       parents #{parents.map(&:location).join(', ')}
     ERROR
+  end
+
+  def match_after?
+    @match_after
   end
 end
