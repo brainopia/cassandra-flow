@@ -1,7 +1,7 @@
 require 'cassandra/flow'
 require 'schema'
 
-Cassandra::Mapper.schema = { keyspaces: [ :flow ]}
+Cassandra::Mapper.schema = { keyspaces: [:flow] }
 Cassandra::Mapper.env    = :test
 Cassandra::Mapper.force_migrate
 
