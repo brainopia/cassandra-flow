@@ -9,7 +9,7 @@ RSpec.configure do |config|
   config.include Schema
 
   config.before do
-    Cassandra.new('flow_test').clear_keyspace!
+    Cassandra::Mapper.clear!
     Cassandra::Mapper.instances.each do |it|
       it.config.dsl.reset_callbacks!
     end
