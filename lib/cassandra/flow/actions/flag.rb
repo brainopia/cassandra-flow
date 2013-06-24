@@ -68,8 +68,8 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
   def build_catalog
     @catalog = Cassandra::Mapper.new keyspace_name, name do
       key  :scope
-      type :data, :yaml
-      type :all,  :yaml
+      type :data, :marshal
+      type :all,  :marshal
     end
   end
 end

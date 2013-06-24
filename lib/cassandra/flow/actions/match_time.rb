@@ -129,8 +129,8 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     @catalog = Cassandra::Mapper.new keyspace_name, name do
       key *config.key
       subkey :source_time
-      type :action_data,   :yaml
-      type :action_result, :yaml
+      type :action_data,   :marshal
+      type :action_result, :marshal
       type :source_time,   :uuid
       type :matched_time,  :time
     end

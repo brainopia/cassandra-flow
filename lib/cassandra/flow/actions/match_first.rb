@@ -95,8 +95,8 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     @catalog = Cassandra::Mapper.new keyspace_name, name do
       key *config.key
       subkey *config.subkey, :uuid
-      type :action_data, :yaml
-      type :action_result, :yaml
+      type :action_data, :marshal
+      type :action_result, :marshal
       type :uuid, :uuid
 
       config.subkey.each do |field|
