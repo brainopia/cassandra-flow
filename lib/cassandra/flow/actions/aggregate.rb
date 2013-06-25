@@ -2,6 +2,10 @@ class Cassandra::Flow::Action::Aggregate < Cassandra::Flow::Action
   action!
   attr_reader :scope, :callback, :catalog
 
+  FIRST_BACKUP = 2
+  LAST_BACKUP  = 3
+  LIMIT_BACKUP = FIRST_BACKUP + LAST_BACKUP
+
   def setup!(scope, &callback)
     @scope    = Array scope
     @callback = callback
@@ -21,6 +25,11 @@ class Cassandra::Flow::Action::Aggregate < Cassandra::Flow::Action
       case type
       when :insert
         all << data
+
+        if all.size >= 2*LIMIT_BACKUP
+          all = all.first(FIRST_BACKUP) + all.last(LAST_BACKUP)
+        end
+
         update = callback.call data, previous
       when :remove
         if all.index data
