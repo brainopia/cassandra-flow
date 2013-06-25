@@ -1,6 +1,7 @@
 class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
   action!
   attr_reader :flag, :scope, :condition, :catalog
+  LIMIT_HISTORY = 5
 
   def setup!(name, scope, &condition)
     @flag      = name
@@ -24,6 +25,10 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
       when :insert
         all << data
         reflag = !previous || condition.call(data, previous)
+
+        if all.size >= 2*LIMIT_HISTORY
+          all = all.sort {|a,b| condition.call(a,b) ? -1 : 1 }.first(LIMIT_HISTORY)
+        end
 
         if reflag
           catalog.insert scope: lock_name, data: data, all: all
