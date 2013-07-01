@@ -128,7 +128,9 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       log_inspect found
       log_inspect all
 
-      result = found[:action_result]
+      if found
+        result = found[:action_result]
+      end
     end
 
     propagate_next type, result
