@@ -122,7 +122,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       end
     when :check
       all = catalog.get key
-      found = potential.find {|it| it[:action_data] == data }
+      found = all.find {|it| it[:action_data] == data }
 
       log_inspect key
       log_inspect found
