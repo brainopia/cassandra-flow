@@ -38,19 +38,23 @@ class Cassandra::Flow::Action::Aggregate < Cassandra::Flow::Action
         else
           update = previous
         end
-      else
-        raise ArgumentError, "unsupported type: #{type}"
       end
 
-      if update
-        catalog.insert scope: lock_name, data: update, all: all
+      if type == :check
+        log_inspect lock_name
+        log_inspect all
+        propagate_next :check, previous
       else
-        catalog.remove scope: lock_name
-      end
+        if update
+          catalog.insert scope: lock_name, data: update, all: all
+        else
+          catalog.remove scope: lock_name
+        end
 
-      if previous != update
-        propagate_next :remove, previous if previous
-        propagate_next :insert, update if update
+        if previous != update
+          propagate_next :remove, previous if previous
+          propagate_next :insert, update if update
+        end
       end
     end
   end

@@ -60,6 +60,15 @@ class Cassandra::Flow::Action::Flag < Cassandra::Flow::Action
             catalog.insert scope: lock_name, data: previous, all: all
           end
         end
+      when :check
+        log_inspect lock_name
+        log_inspect all
+
+        if data == all.sort {|a,b| condition.call(a,b) ? -1 : 1 }.first
+          data = data.merge flag => true
+        end
+
+        propagate_next :check, data
       else
         raise ArgumentError, "unsupported type: #{type}"
       end

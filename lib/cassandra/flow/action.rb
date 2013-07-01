@@ -47,15 +47,12 @@ class Cassandra::Flow::Action
   end
 
   def propagate_for(actions, type, data)
-    Cassandra::Flow.logger.tap do |it|
-      next unless it
+    log do |it|
       it.puts name
       it.puts "location - #{location}"
       it.puts "destinations - #{actions.map(&:location)}"
       it.puts type
       it.puts data.inspect
-      it.puts
-      it.puts
     end
 
     if data.is_a? Array
@@ -105,5 +102,18 @@ class Cassandra::Flow::Action
 
   def append_name(string)
     name << '_' << string if string
+  end
+
+  def log(&block)
+    logger = Cassandra::Flow.logger
+    if logger
+      block.call logger
+      logger.puts
+      logger.puts
+    end
+  end
+
+  def log_inspect(entry)
+    log {|it| it.puts "inspect: #{entry.inspect}" }
   end
 end

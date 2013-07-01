@@ -89,7 +89,8 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     source_time = data[source_field]
     error! "missing :#{source_field} in #{data.inspect}" unless source_time
 
-    if type == :insert
+    case type
+    when :insert
       query = if match_after?
           { start: { matched_field => source_time }}
         else
@@ -108,7 +109,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
         matched_time:   matched_time,
         source_time:    source_time
       catalog.insert catalog_record
-    elsif type == :remove
+    when :remove
       potential = catalog.get key,
         start:  { source_time: source_time - TIME_STEP },
         finish: { source_time: source_time + TIME_STEP }
@@ -119,6 +120,15 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
         result = found[:action_result]
         catalog.remove found
       end
+    when :check
+      all = catalog.get key
+      found = potential.find {|it| it[:action_data] == data }
+
+      log_inspect key
+      log_inspect found
+      log_inspect all
+
+      result = found[:action_result]
     end
 
     propagate_next type, result

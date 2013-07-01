@@ -64,14 +64,22 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
     subkey  = matched ? select(:subkey, matched) : max_subkey
     result  = callback.call data, matched
 
-    if type == :insert
+    case type
+    when :insert
       catalog_record = key
       catalog_record.merge! subkey
       catalog_record.merge! action_data: data, action_result: result
       catalog.insert catalog_record
-    elsif type == :remove
+    when :remove
       found = catalog.get(key.merge(subkey)).find {|it| it[:action_data] == data }
       catalog.remove found if found
+    when :check
+      all = catalog.get(key)
+      found = all.find {|it| it[:action_data] == data }
+
+      log_inspect key
+      log_inspect found
+      log_inspect all
     end
 
     propagate_next type, result
