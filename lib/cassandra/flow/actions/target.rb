@@ -16,6 +16,7 @@ class Cassandra::Flow::Action::Target < Cassandra::Flow::Action
       log_inspect key
       log_inspect objects
     end
+    data
   end
 
   private
