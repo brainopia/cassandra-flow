@@ -1,5 +1,5 @@
 # TODO: reinsert?
-# if matched mapper uses uuid we have to use TIME_STEP also
+# matched mapper uses uuid so we have to use TIME_STEP
 class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   action!
   attr_reader :mapper, :callback, :catalog,
@@ -86,6 +86,7 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   private
 
   def match_time(type, key, data)
+    # data = cassandrify data
     source_time = data[source_field]
     error! "missing :#{source_field} in #{data.inspect}" unless source_time
 
@@ -110,11 +111,8 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
         source_time:    source_time
       catalog.insert catalog_record
     when :remove
-      potential = catalog.get key,
-        start:  { source_time: source_time - TIME_STEP },
-        finish: { source_time: source_time + TIME_STEP }
-
-      found = potential.find {|it| it[:action_data] == data }
+      all = catalog.get key
+      found = all.find {|it| it[:action_data] == data }
 
       if found
         result = found[:action_result]
@@ -168,5 +166,18 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   def match_after?
     @match_after
+  end
+
+  def cassandrify(data)
+    data = data.dup
+    data.each do |k, v|
+      if v.is_a? Time
+        data[k] = rounded_time v
+      end
+    end
+  end
+
+  def rounded_time(time)
+    Time.at((time.to_f * 1000).to_i / 1000.0)
   end
 end

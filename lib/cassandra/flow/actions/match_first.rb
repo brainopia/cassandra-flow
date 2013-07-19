@@ -60,22 +60,29 @@ class Cassandra::Flow::Action::MatchFirst < Cassandra::Flow::Action
   private
 
   def match_first(type, key, data)
-    matched = mapper.one key
-    subkey  = matched ? select(:subkey, matched) : max_subkey
-    result  = callback.call data, matched
-
     case type
     when :insert
+      matched = mapper.one key
+      subkey  = matched ? select(:subkey, matched) : max_subkey
+      result  = callback.call data, matched
+
       catalog_record = key
       catalog_record.merge! subkey
       catalog_record.merge! action_data: data, action_result: result
       catalog.insert catalog_record
     when :remove
-      found = catalog.get(key.merge(subkey)).find {|it| it[:action_data] == data }
-      catalog.remove found if found
+      all = catalog.get(key)
+      found = all.find {|it| it[:action_data] == data }
+
+      if found
+        result = found[:action_result]
+        catalog.remove found
+      end
     when :check
       all = catalog.get(key)
       found = all.find {|it| it[:action_data] == data }
+
+      result = found[:action_result] if found
 
       log_inspect key
       log_inspect found

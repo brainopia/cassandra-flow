@@ -55,14 +55,15 @@ class Cassandra::Flow::Action
       it.puts data.inspect
     end
 
+    propagation = ->(it) do
+      it.freeze
+      actions.map {|action| action.propagate type, it }
+    end
+
     if data.is_a? Array
-      data.each do |it|
-        it.freeze
-        actions.map {|action| action.propagate type, it }
-      end
+      data.each(&propagation)
     elsif data
-      data.freeze
-      actions.map {|action| action.propagate type, data }
+      propagation.call data
     end
   end
 
@@ -108,8 +109,7 @@ class Cassandra::Flow::Action
     logger = Cassandra::Flow.logger
     if logger
       block.call logger
-      logger.puts
-      logger.puts
+      logger.puts "\n"*2
     end
   end
 

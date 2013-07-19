@@ -1,7 +1,8 @@
 require 'spec_helper'
 
 describe Cassandra::Flow::Action::MatchTime do
-  let(:base_time) { Time.at Time.now.to_i }
+  let(:base_time) { Time.at Time.now.to_i + 0.001002 }
+  let(:round_time) { Time.at Time.now.to_i + 0.001 }
 
   context 'automatic field match' do
     before do
@@ -14,25 +15,25 @@ describe Cassandra::Flow::Action::MatchTime do
 
     it 'should match first record of corresponding table' do
       events.insert project_id: 72, time: base_time
-      event_map.all.should == [{ project_id: 72, matched_id: 404, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 404, time: round_time }]
 
       events2.insert project_id: 72, id: 14, time: base_time - 1
-      event_map.all.should == [{ project_id: 72, matched_id: 14, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 14, time: round_time }]
 
       events2.insert project_id: 72, id: 10, time: base_time + 4
-      event_map.all.should == [{ project_id: 72, matched_id: 14, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 14, time: round_time }]
 
       events2.insert project_id: 72, id: 10, time: base_time - 4
-      event_map.all.should == [{ project_id: 72, matched_id: 14, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 14, time: round_time }]
 
       events2.insert project_id: 72, id: 10, time: base_time
-      event_map.all.should == [{ project_id: 72, matched_id: 10, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 10, time: round_time }]
     end
 
     it 'should support equal time matching on insert' do
       events2.insert project_id: 72, id: 10, time: base_time
       events.insert project_id: 72, time: base_time
-      event_map.all.should == [{ project_id: 72, matched_id: 10, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 10, time: round_time }]
     end
 
     it 'should support removal' do
@@ -49,14 +50,14 @@ describe Cassandra::Flow::Action::MatchTime do
       events.insert project_id: 72, time: base_time
       events.insert project_id: 72, time: base_time + 100_000
       event_map.all.should == [
-        { project_id: 72, matched_id: 14, time: base_time },
-        { project_id: 72, matched_id: 14, time: base_time + 100_000 }
+        { project_id: 72, matched_id: 14, time: round_time },
+        { project_id: 72, matched_id: 14, time: round_time + 100_000 }
       ]
 
       events2.remove project_id: 72, id: 14, time: base_time
       event_map.all.should == [
-        { project_id: 72, matched_id: 404, time: base_time },
-        { project_id: 72, matched_id: 404, time: base_time + 100_000 }
+        { project_id: 72, matched_id: 404, time: round_time },
+        { project_id: 72, matched_id: 404, time: round_time + 100_000 }
       ]
     end
   end
@@ -77,13 +78,13 @@ describe Cassandra::Flow::Action::MatchTime do
 
     it 'should match first record of corresponding table' do
       events.insert project_id: 72, time: base_time
-      diff_event_map.all.should == [{ project_id: 72, matched_id: 404, diff: base_time + diff }]
+      diff_event_map.all.should == [{ project_id: 72, matched_id: 404, diff: round_time + diff }]
 
       events2.insert project_id: 72, id: 14, time: base_time + diff + 1
-      diff_event_map.all.should == [{ project_id: 72, matched_id: 404, diff: base_time + diff }]
+      diff_event_map.all.should == [{ project_id: 72, matched_id: 404, diff: round_time + diff }]
 
       events2.insert project_id: 72, id: 10, time: base_time + diff
-      diff_event_map.all.should == [{ project_id: 72, matched_id: 10, diff: base_time + diff }]
+      diff_event_map.all.should == [{ project_id: 72, matched_id: 10, diff: round_time + diff }]
     end
   end
 
@@ -98,25 +99,25 @@ describe Cassandra::Flow::Action::MatchTime do
 
     it 'should match first record of corresponding table' do
       events.insert project_id: 72, time: base_time
-      event_map.all.should == [{ project_id: 72, matched_id: 404, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 404, time: round_time }]
 
       events2.insert project_id: 72, id: 14, time: base_time + 1
-      event_map.all.should == [{ project_id: 72, matched_id: 14, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 14, time: round_time }]
 
       events2.insert project_id: 72, id: 10, time: base_time - 4
-      event_map.all.should == [{ project_id: 72, matched_id: 14, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 14, time: round_time }]
 
       events2.insert project_id: 72, id: 10, time: base_time + 4
-      event_map.all.should == [{ project_id: 72, matched_id: 14, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 14, time: round_time }]
 
       events2.insert project_id: 72, id: 10, time: base_time
-      event_map.all.should == [{ project_id: 72, matched_id: 10, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 10, time: round_time }]
     end
 
     it 'should support equal time matching on insert' do
       events2.insert project_id: 72, id: 10, time: base_time
       events.insert project_id: 72, time: base_time
-      event_map.all.should == [{ project_id: 72, matched_id: 10, time: base_time }]
+      event_map.all.should == [{ project_id: 72, matched_id: 10, time: round_time }]
     end
 
     it 'should support removal' do
@@ -133,14 +134,14 @@ describe Cassandra::Flow::Action::MatchTime do
       events.insert project_id: 72, time: base_time
       events.insert project_id: 72, time: base_time - 100_000
       event_map.all.should == [
-        { project_id: 72, matched_id: 14, time: base_time - 100_000 },
-        { project_id: 72, matched_id: 14, time: base_time }
+        { project_id: 72, matched_id: 14, time: round_time - 100_000 },
+        { project_id: 72, matched_id: 14, time: round_time }
       ]
 
       events2.remove project_id: 72, id: 14, time: base_time
       event_map.all.should == [
-        { project_id: 72, matched_id: 404, time: base_time - 100_000 },
-        { project_id: 72, matched_id: 404, time: base_time }
+        { project_id: 72, matched_id: 404, time: round_time - 100_000 },
+        { project_id: 72, matched_id: 404, time: round_time }
       ]
     end
   end
