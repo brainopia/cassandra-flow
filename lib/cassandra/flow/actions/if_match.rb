@@ -8,8 +8,9 @@ class Cassandra::Flow::Action::IfMatch < Cassandra::Flow::Action
     @value = value
     if block
       block.call Cassandra::Flow.new(self)
-      @block_children = @children
-      @children       = []
+      @block_children  = @children
+      @block_endpoints = endpoints @block_children
+      @children        = []
     end
   end
 
@@ -24,8 +25,8 @@ class Cassandra::Flow::Action::IfMatch < Cassandra::Flow::Action
 
   def add_child(action)
     super
-    return unless @block_children
-    endpoints(@block_children).each do |it|
+    return unless @block_endpoints
+    @block_endpoints.each do |it|
       action.add_parent it
     end
   end
