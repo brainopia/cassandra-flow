@@ -83,6 +83,10 @@ class Cassandra::Flow::Action
     parents.first.source
   end
 
+  def inspect
+    "#{self.class.name}: #{location} #{name}"
+  end
+
   private
 
   def lock(lock_name, options={}, &block)
