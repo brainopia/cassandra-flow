@@ -48,7 +48,7 @@ describe Cassandra::Flow::Action::MatchFirst do
       Cassandra::Flow
         .source(facts)
         .match_first(facts) {|data, match|
-          data.merge matched_id: match ? match[:id] : 404
+          data.merge matched_id: match[:id]
         }.target(views)
     end
 

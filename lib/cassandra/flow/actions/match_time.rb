@@ -1,9 +1,8 @@
-# TODO: reinsert?
-# matched mapper uses uuid so we have to use TIME_STEP
 class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
   action!
   attr_reader :mapper, :callback, :catalog,
-              :source_field, :matched_field
+              :source_field, :matched_field,
+              :interval
 
   # TIME_STEP instead of (slice: :before/after) because of uuid
   TIME_STEP = 0.001
@@ -15,6 +14,10 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     @matched_field = mapper.config.subkey.first
     @match_after   = options[:after]
 
+    if options[:interval]
+      @interval = (options[:interval] + TIME_STEP) * (match_after? ? 1 : -1)
+    end
+
     append_name mapper.table
     append_name source_field.to_s
     append_name matched_field.to_s
@@ -25,25 +28,18 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       matched_time = match[matched_field]
 
       lock key do
-        if match_after?
-          records = catalog.get key, finish: { source_time: matched_time + TIME_STEP }
+        records = query_catalog key, matched_time
+        unless interval
           records.select! do |it|
-            not it[:matched_time] or it[:matched_time] > matched_time
-          end
-        else
-          records = catalog.get key, start: { source_time: matched_time - TIME_STEP }
-          records.select! do |it|
-            not it[:matched_time] or it[:matched_time] < matched_time
+            sign = match_after? ? :> : :<
+            not it[:matched_time] or it[:matched_time].send(sign, matched_time)
           end
         end
 
         records.each do |record|
-          propagate_next :remove, record[:action_result]
-          record[:action_result] = callback.call record[:action_data], match
-          propagate_next :insert, record[:action_result]
-
-          record[:matched_time] = matched_time
-          catalog.insert record
+          prepare = { result: record[:action_result], time: record[:source_time] }
+          prepare[:match] = match unless interval
+          match_time :insert, key, record[:action_data], prepare
         end
       end
     end
@@ -53,19 +49,14 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       matched_time = match[matched_field]
 
       lock key do
-        query = if match_after?
-          { finish: { source_time: matched_time + TIME_STEP }}
-        else
-          { start: { source_time: matched_time - TIME_STEP }}
+        records = query_catalog key, matched_time
+        unless interval
+          records.select! {|it| it[:matched_time].to_i == matched_time.to_i }
         end
 
-        records = catalog.get key, query
-        records.select! {|it| it[:matched_time].to_i == matched_time.to_i }
-
         records.each do |record|
-          catalog.remove record
-          propagate_next :remove, record[:action_result]
-          match_time :insert, key, record[:action_data]
+          prepare = { result: record[:action_result], time: record[:source_time] }
+          match_time :insert, key, record[:action_data], prepare
         end
       end
     end
@@ -85,23 +76,38 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
 
   private
 
-  def match_time(type, key, data)
-    # data = cassandrify data
-    source_time = data[source_field]
+  def match_time(type, key, data, prepared_data={})
+    source_time = prepared_data[:time] || data[source_field]
     error! "missing :#{source_field} in #{data.inspect}" unless source_time
 
     case type
     when :insert
-      query = if match_after?
-          { start: { matched_field => source_time }}
+      if prepared_data[:match]
+        matched = prepared_data[:match]
+      else
+        query = if match_after?
+            { start: { matched_field => source_time }}
+          else
+            # slice :after in reverse means to match including current record
+            { reversed: true, start: { matched_field => source_time, slice: :after }}
+          end
+        if interval
+          query[:finish] = { matched_field => source_time + interval }
+          matched = mapper.get key, query
         else
-          # slice :after in reverse means to match including current record
-          { reversed: true, start: { matched_field => source_time, slice: :after }}
+          matched = mapper.one key, query
         end
-      matched = mapper.one key, query
 
-      matched_time = matched[matched_field] if matched
-      result       = callback.call data, matched
+        if interval and not match_after?
+          matched.reverse!
+        end
+      end
+
+      result = callback.call data, matched
+
+      if matched and not interval
+        matched_time = matched[matched_field]
+      end
 
       catalog_record = key
       catalog_record.merge! \
@@ -131,7 +137,11 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
       end
     end
 
-    propagate_next type, result
+    previous_result = prepared_data.fetch(:result, false)
+    if result != previous_result
+      propagate_next :remove, previous_result if previous_result
+      propagate_next type, result
+    end
   end
 
   def build_catalog
@@ -168,16 +178,23 @@ class Cassandra::Flow::Action::MatchTime < Cassandra::Flow::Action
     @match_after
   end
 
-  def cassandrify(data)
-    data = data.dup
-    data.each do |k, v|
-      if v.is_a? Time
-        data[k] = rounded_time v
-      end
-    end
-  end
-
   def rounded_time(time)
     Time.at((time.to_f * 1000).to_i / 1000.0)
+  end
+
+  def query_catalog(key, time)
+    if match_after?
+      query = { finish: { source_time: time + TIME_STEP }}
+      if interval
+        query[:start] = { source_time: time - interval }
+      end
+    else
+      query = { start: { source_time: time - TIME_STEP }}
+      if interval
+        query[:finish] = { source_time: time - interval }
+      end
+    end
+
+    catalog.get key, query
   end
 end
