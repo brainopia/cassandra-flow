@@ -3,6 +3,7 @@ require 'cassandra/mapper'
 class Cassandra::Flow
   class << self
     attr_accessor :logger
+    attr_accessor :keyspace
 
     # hook to extend flow with additional actions
     def action(klass, type=nil)

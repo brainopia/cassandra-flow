@@ -95,8 +95,12 @@ class Cassandra::Flow::Action
   end
 
   def keyspace_name
+    keyspace  = Cassandra::Flow.keyspace
     keyspaces = Cassandra::Mapper.schema[:keyspaces]
-    if keyspaces.size == 1
+
+    if keyspace
+      keyspace
+    elsif keyspaces.size == 1
       keyspaces.first
     elsif keyspaces.include? :views
       :views
