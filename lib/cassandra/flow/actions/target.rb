@@ -3,7 +3,11 @@ class Cassandra::Flow::Action::Target < Cassandra::Flow::Action
   attr_reader :target
 
   def setup!(mapper)
-    @target = mapper or raise ArgumentError('target is nil')
+    if mapper.is_a? Cassandra::Mapper
+      @target = mapper
+    else
+      raise ArgumentError, 'target is nil'
+    end
   end
 
   def transform(type, data)
