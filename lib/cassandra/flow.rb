@@ -46,4 +46,8 @@ class Cassandra::Flow
   def initialize(action)
     @action = action
   end
+
+  def apply
+    yield self if block_given?
+  end
 end
