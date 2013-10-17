@@ -57,7 +57,16 @@ class Cassandra::Flow::Action
 
     propagation = ->(it) do
       it.freeze
-      actions.map {|action| action.propagate type, it }
+      actions.map do |action|
+        begin
+          action.propagate type, it
+        rescue Cassandra::Flow::Error
+          $!.prepend_location action.location
+          raise
+        rescue
+          raise Cassandra::Flow::Error.new(action.location, $!.backtrace)
+        end
+      end
     end
 
     if data.is_a? Array

@@ -28,6 +28,7 @@ class Cassandra::Flow
     end
   end
 
+  require_relative 'flow/error'
   require_relative 'flow/action'
   require_relative 'flow/actions/source'
   require_relative 'flow/actions/target'
