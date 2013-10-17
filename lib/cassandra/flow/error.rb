@@ -1,7 +1,8 @@
 class Cassandra::Flow::Error < StandardError
-  def initialize(location, backtrace)
+  def initialize(location, error)
     @locations = [format(location)]
-    @backtrace = backtrace
+    @backtrace = error.backtrace
+    @message   = error.message
   end
 
   def backtrace

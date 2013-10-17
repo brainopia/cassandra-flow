@@ -64,7 +64,7 @@ class Cassandra::Flow::Action
           $!.prepend_location action.location
           raise
         rescue
-          raise Cassandra::Flow::Error.new(action.location, $!.backtrace)
+          raise Cassandra::Flow::Error.new(action.location, $!)
         end
       end
     end
