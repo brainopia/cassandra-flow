@@ -7,7 +7,7 @@ class Cassandra::Flow::Action::IfMatch < Cassandra::Flow::Action
     @field = field
     @value = value
     if block
-      block.call Cassandra::Flow.new(self)
+      block.call flow.clone_with(self)
       @block_children  = @children
       @block_endpoints = endpoints @block_children
       @children        = []

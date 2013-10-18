@@ -15,12 +15,12 @@ class Cassandra::Flow
         instance = true
       end
       send define, klass.action_name do |*args, &block|
-        new_action = klass.new instance && action
+        new_action = klass.new self, instance && action
         new_action.setup! *args, &block
 
         if instance
           # to support inheritance of extended modules
-          clone.tap {|it| it.action = new_action }
+          clone_with new_action
         else
           Cassandra::Flow.new new_action
         end
@@ -50,5 +50,9 @@ class Cassandra::Flow
 
   def apply
     yield self if block_given?
+  end
+
+  def clone_with(action)
+    clone.tap {|it| it.action = action }
   end
 end

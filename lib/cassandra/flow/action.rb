@@ -9,9 +9,11 @@ class Cassandra::Flow::Action
     end
   end
 
-  attr_reader :location, :parents, :children, :name, :suffix
+  attr_reader :location, :parents, :children,
+              :name, :suffix, :flow
 
-  def initialize(action=nil)
+  def initialize(flow, action=nil)
+    @flow     = flow
     @location = caller[2].gsub(/(:in.*)|(#{Dir.pwd}\/)/, '')
     @parents  = []
     @children = []
