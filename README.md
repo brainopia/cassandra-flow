@@ -2,5 +2,5 @@
 
 Flexible workflow for cassandra based on first-class support of materialized views.
 
-[![Build
-Status](https://secure.travis-ci.org/brainopia/cassandra-flow.png)](http://travis-ci.org/brainopia/cassandra-flow)
+<a href="https://evilmartians.com/?utm_source=sidekiq-limit_fetch">
+<img src="https://evilmartians.com/badges/sponsored-by-evil-martians.svg" alt="Sponsored by Evil Martians" width="236" height="54"></a>
